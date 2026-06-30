@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SMG — Sales Board</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Kanit:wght@300;400;600;700&family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --db:#003e52;--gg:#6fa088;--bk:#231f20;--wh:#fff;
+  --lb:#f4f8f9;--br:#dde8eb;--mu:#6b8a93;
+  --gr:linear-gradient(135deg,#003e52 0%,#6fa088 100%);
+  --won:#1a7a3f;--won-bg:#e8f8ee;
+  --lost:#b71c1c;--lost-bg:#fdecea;
+  --inv:#1a237e;--inv-bg:#e8f0ff;
+  --paid:#e8a020;--paid-bg:#fff8e6;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Kanit','Prompt',sans-serif;background:#e8f0f3;color:var(--bk);min-height:100vh;overflow-x:hidden;}
+
+/* TOPBAR */
+.topbar{background:var(--db);padding:11px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(0,62,82,.3);}
+.logo{display:flex;align-items:center;gap:8px;text-decoration:none;}
+.logo-ast{width:28px;height:28px;}
+.logo-text{font-family:'Montserrat',sans-serif;font-weight:800;font-size:15px;color:var(--wh);letter-spacing:2px;}
+.logo-sub{font-family:'Montserrat',sans-serif;font-size:7px;color:var(--gg);letter-spacing:1.5px;}
+.page-title{font-family:'Montserrat',sans-serif;font-weight:700;font-size:13px;color:rgba(255,255,255,.7);letter-spacing:.5px;padding-left:12px;border-left:1px solid rgba(255,255,255,.2);}
+.sp{flex:1;}
+.nav-btns{display:flex;gap:6px;}
+.nav-btn{font-family:'Kanit',sans-serif;font-size:11px;font-weight:600;padding:6px 12px;border-radius:4px;border:1.5px solid rgba(255,255,255,.25);color:rgba(255,255,255,.8);background:transparent;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:4px;transition:all .18s;}
+.nav-btn:hover{border-color:var(--gg);color:var(--wh);}
+.nav-btn.active{background:var(--gg);border-color:var(--gg);color:var(--wh);}
+
+/* SUMMARY BAR */
+.summary-bar{background:var(--wh);border-bottom:1px solid var(--br);padding:12px 20px;display:flex;gap:16px;overflow-x:auto;}
+.summary-bar::-webkit-scrollbar{display:none;}
+.sum-item{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.sum-dot{width:10px;height:10px;border-radius:50%;}
+.sum-label{font-size:10px;color:var(--mu);font-family:'Montserrat',sans-serif;letter-spacing:.5px;}
+.sum-val{font-family:'Montserrat',sans-serif;font-weight:700;font-size:14px;color:var(--db);}
+.sum-div{width:1px;height:30px;background:var(--br);}
+
+/* BOARD */
+.board-wrap{padding:16px 20px 24px;display:flex;gap:14px;overflow-x:auto;min-height:calc(100vh - 120px);}
+.board-wrap::-webkit-scrollbar{height:6px;}
+.board-wrap::-webkit-scrollbar-track{background:transparent;}
+.board-wrap::-webkit-scrollbar-thumb{background:var(--mu);border-radius:3px;}
+
+/* COLUMN */
+.col{flex-shrink:0;width:270px;display:flex;flex-direction:column;gap:10px;}
+.col-head{background:var(--db);border-radius:8px 8px 0 0;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;}
+.col-title{font-family:'Montserrat',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;color:var(--wh);text-transform:uppercase;}
+.col-count{font-family:'Montserrat',sans-serif;font-weight:700;font-size:11px;color:var(--gg);}
+.col-body{background:rgba(255,255,255,.5);border-radius:0 0 8px 8px;border:1px solid var(--br);border-top:none;padding:10px;min-height:200px;display:flex;flex-direction:column;gap:8px;}
+.col-body.dragover{background:rgba(111,160,136,.15);border-color:var(--gg);}
+
+/* CARD */
+.card{background:var(--wh);border-radius:8px;padding:12px;border:1px solid var(--br);cursor:grab;transition:all .18s;position:relative;box-shadow:0 1px 4px rgba(0,62,82,.06);}
+.card:hover{box-shadow:0 3px 12px rgba(0,62,82,.14);border-color:var(--gg);transform:translateY(-1px);}
+.card:active{cursor:grabbing;}
+.card.dragging{opacity:.4;transform:rotate(2deg);}
+.card-num{font-family:'Montserrat',sans-serif;font-weight:700;font-size:9.5px;color:var(--mu);letter-spacing:.5px;margin-bottom:5px;}
+.card-cust{font-family:'Kanit',sans-serif;font-weight:600;font-size:12px;color:var(--db);margin-bottom:4px;line-height:1.3;}
+.card-amt{font-family:'Montserrat',sans-serif;font-weight:800;font-size:14px;color:var(--gg);margin-bottom:6px;}
+.card-date{font-size:9px;color:var(--mu);font-family:'Prompt',sans-serif;}
+.card-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;}
+.tag{display:inline-block;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:600;font-family:'Kanit',sans-serif;}
+.tag-vat{background:#e8f4f8;color:var(--db);}
+.card-actions{display:flex;gap:5px;margin-top:8px;border-top:1px solid var(--br);padding-top:8px;}
+.card-btn{font-family:'Kanit',sans-serif;font-size:9.5px;font-weight:600;padding:4px 9px;border-radius:4px;border:none;cursor:pointer;transition:all .18s;flex:1;text-align:center;}
+.card-btn-open{background:var(--lb);color:var(--db);}
+.card-btn-open:hover{background:var(--db);color:var(--wh);}
+.card-btn-won{background:var(--won-bg);color:var(--won);}
+.card-btn-won:hover{background:var(--won);color:var(--wh);}
+.card-btn-lost{background:var(--lost-bg);color:var(--lost);}
+.card-btn-lost:hover{background:var(--lost);color:var(--wh);}
+.card-btn-inv{background:var(--inv-bg);color:var(--inv);}
+.card-btn-inv:hover{background:var(--inv);color:var(--wh);}
+.card-btn-paid{background:var(--paid-bg);color:var(--paid);}
+.card-btn-paid:hover{background:var(--paid);color:var(--wh);}
+
+/* EMPTY STATE */
+.col-empty{text-align:center;padding:20px 10px;color:var(--mu);}
+.col-empty-icon{font-size:28px;margin-bottom:6px;}
+.col-empty-txt{font-size:10px;font-family:'Kanit',sans-serif;line-height:1.6;}
+
+/* ADD CARD BUTTON */
+.col-add{background:transparent;border:1.5px dashed var(--br);border-radius:6px;padding:8px;text-align:center;cursor:pointer;font-family:'Kanit',sans-serif;font-size:11px;color:var(--mu);transition:all .18s;}
+.col-add:hover{border-color:var(--gg);color:var(--gg);background:rgba(111,160,136,.05);}
+
+/* MODAL */
+.mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center;}
+.mbg.show{display:flex;}
+.modal{background:var(--wh);border-radius:10px;width:92%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 16px 64px rgba(0,0,0,.3);}
+.modal-head{background:var(--gr);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-radius:10px 10px 0 0;}
+.modal-title{font-family:'Montserrat',sans-serif;font-weight:800;font-size:14px;color:var(--wh);}
+.modal-close{background:rgba(255,255,255,.2);border:none;color:white;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:14px;}
+.modal-body{padding:16px 18px;}
+.mf{margin-bottom:10px;}
+.ml{font-size:10px;font-weight:600;color:var(--mu);margin-bottom:3px;display:block;}
+.mi{width:100%;font-family:'Prompt',sans-serif;font-size:12px;padding:7px 9px;border:1px solid var(--br);border-radius:4px;color:var(--bk);background:var(--lb);outline:none;}
+.mi:focus{border-color:var(--gg);background:var(--wh);}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.modal-foot{padding:12px 18px;border-top:1px solid var(--br);display:flex;gap:8px;justify-content:flex-end;}
+.mbtn{font-family:'Kanit',sans-serif;font-size:11px;font-weight:600;padding:8px 18px;border-radius:4px;border:none;cursor:pointer;}
+.mbtn-cancel{background:var(--lb);color:var(--mu);}
+.mbtn-save{background:var(--gr);color:var(--wh);}
+
+/* STATUS BADGE in modal */
+.status-badge{display:inline-block;padding:3px 10px;border-radius:10px;font-size:10px;font-weight:700;font-family:'Kanit',sans-serif;}
+
+@media(max-width:600px){
+  .board-wrap{padding:10px 12px 80px;}
+  .col{width:240px;}
+  .summary-bar{padding:10px 12px;}
+  .topbar{padding:9px 12px;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="index.html" class="logo">
+    <svg class="logo-ast" viewBox="0 0 100 100" fill="none">
+      <g transform="translate(50,50)">
+        <polygon points="0,-38 8,-38 8,38 -8,38 -8,-38" fill="#6fa088" transform="rotate(0)"/>
+        <polygon points="0,-38 8,-38 8,38 -8,38 -8,-38" fill="#6fa088" transform="rotate(60)"/>
+        <polygon points="0,-38 8,-38 8,38 -8,38 -8,-38" fill="#6fa088" transform="rotate(120)"/>
+        <polygon points="4,-40 8,-38 -8,38 -12,36" fill="#4a7a66" transform="rotate(0)"/>
+        <polygon points="4,-40 8,-38 -8,38 -12,36" fill="#4a7a66" transform="rotate(60)"/>
+        <polygon points="4,-40 8,-38 -8,38 -12,36" fill="#4a7a66" transform="rotate(120)"/>
+      </g>
+    </svg>
+    <div><div class="logo-text">SMG</div><div class="logo-sub">GLASS AND METAL</div></div>
+  </a>
+  <span class="page-title">SALES BOARD</span>
+  <div class="sp"></div>
+  <div class="nav-btns">
+    <a href="index.html" class="nav-btn">🏠 Portal</a>
+    <a href="invoice.html" class="nav-btn">📄 เอกสาร</a>
+    <button class="nav-btn active" onclick="openAddCard()">+ เพิ่มงาน</button>
+  </div>
+</div>
+
+<!-- SUMMARY BAR -->
+<div class="summary-bar">
+  <div class="sum-item">
+    <div class="sum-dot" style="background:#6fa088"></div>
+    <div><div class="sum-label">ใบเสนอราคา</div><div class="sum-val" id="sumQt">0 ฉบับ</div></div>
+  </div>
+  <div class="sum-div"></div>
+  <div class="sum-item">
+    <div class="sum-dot" style="background:#1a7a3f"></div>
+    <div><div class="sum-label">มูลค่างานที่ได้</div><div class="sum-val" id="sumWon">฿0</div></div>
+  </div>
+  <div class="sum-div"></div>
+  <div class="sum-item">
+    <div class="sum-dot" style="background:#1a237e"></div>
+    <div><div class="sum-label">รอรับเงิน</div><div class="sum-val" id="sumInv">฿0</div></div>
+  </div>
+  <div class="sum-div"></div>
+  <div class="sum-item">
+    <div class="sum-dot" style="background:#e8a020"></div>
+    <div><div class="sum-label">รับเงินแล้ว</div><div class="sum-val" id="sumPaid">฿0</div></div>
+  </div>
+  <div class="sum-div"></div>
+  <div class="sum-item">
+    <div class="sum-dot" style="background:#b71c1c"></div>
+    <div><div class="sum-label">ไม่ได้งาน</div><div class="sum-val" id="sumLost">0 ฉบับ</div></div>
+  </div>
+</div>
+
+<!-- BOARD -->
+<div class="board-wrap">
+
+  <!-- COL 1: ใบเสนอราคา -->
+  <div class="col">
+    <div class="col-head">
+      <span class="col-title">📋 ใบเสนอราคา</span>
+      <span class="col-count" id="cntQt">0</span>
+    </div>
+    <div class="col-body" id="colQt" ondragover="onDragOver(event,'quotation')" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'quotation')">
+      <div class="col-empty"><div class="col-empty-icon">📋</div><div class="col-empty-txt">ยังไม่มีใบเสนอราคา<br>กด "+ เพิ่มงาน" เพื่อเริ่ม</div></div>
+    </div>
+    <button class="col-add" onclick="openAddCard()">+ เพิ่มใบเสนอราคา</button>
+  </div>
+
+  <!-- COL 2: ได้งาน -->
+  <div class="col">
+    <div class="col-head" style="background:var(--won)">
+      <span class="col-title">✅ ได้งาน</span>
+      <span class="col-count" id="cntWon">0</span>
+    </div>
+    <div class="col-body" id="colWon" ondragover="onDragOver(event,'won')" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'won')">
+      <div class="col-empty"><div class="col-empty-icon">🎉</div><div class="col-empty-txt">ลากใบเสนอราคา<br>มาวางที่นี่เมื่อได้งาน</div></div>
+    </div>
+  </div>
+
+  <!-- COL 3: ไม่ได้งาน -->
+  <div class="col">
+    <div class="col-head" style="background:var(--lost)">
+      <span class="col-title">❌ ไม่ได้งาน</span>
+      <span class="col-count" id="cntLost">0</span>
+    </div>
+    <div class="col-body" id="colLost" ondragover="onDragOver(event,'lost')" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'lost')">
+      <div class="col-empty"><div class="col-empty-icon">📁</div><div class="col-empty-txt">ลากมาวางที่นี่<br>เมื่องานไม่ผ่าน</div></div>
+    </div>
+  </div>
+
+  <!-- COL 4: ออกใบแจ้งหนี้ -->
+  <div class="col">
+    <div class="col-head" style="background:var(--inv)">
+      <span class="col-title">🧾 ใบแจ้งหนี้</span>
+      <span class="col-count" id="cntInv">0</span>
+    </div>
+    <div class="col-body" id="colInv" ondragover="onDragOver(event,'invoiced')" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'invoiced')">
+      <div class="col-empty"><div class="col-empty-icon">🧾</div><div class="col-empty-txt">งานที่ออกใบแจ้งหนี้<br>แล้ว รอรับเงิน</div></div>
+    </div>
+  </div>
+
+  <!-- COL 5: รับเงินแล้ว -->
+  <div class="col">
+    <div class="col-head" style="background:var(--paid)">
+      <span class="col-title">💰 รับเงินแล้ว</span>
+      <span class="col-count" id="cntPaid">0</span>
+    </div>
+    <div class="col-body" id="colPaid" ondragover="onDragOver(event,'paid')" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'paid')">
+      <div class="col-empty"><div class="col-empty-icon">✨</div><div class="col-empty-txt">งานที่รับเงินแล้ว<br>เสร็จสมบูรณ์</div></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ADD CARD MODAL -->
+<div class="mbg" id="addModal">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title" id="modalTitle">+ เพิ่มใบเสนอราคา</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="mf"><label class="ml">เลขที่เอกสาร</label><input class="mi" id="mNum" placeholder="SMG-QT-2569-001"></div>
+      <div class="mf"><label class="ml">ชื่อลูกค้า / บริษัท</label><input class="mi" id="mCust" placeholder="บริษัท ตัวอย่าง จำกัด"></div>
+      <div class="r2">
+        <div class="mf"><label class="ml">มูลค่า (บาท)</label><input class="mi" id="mAmt" type="number" placeholder="0"></div>
+        <div class="mf"><label class="ml">วันที่</label><input class="mi" id="mDate" type="date"></div>
+      </div>
+      <div class="mf"><label class="ml">รายละเอียดงาน</label><input class="mi" id="mDesc" placeholder="ติดตั้งกระจก..."></div>
+      <div class="mf"><label class="ml"><input type="checkbox" id="mVat"> มี VAT 7%</label></div>
+    </div>
+    <div class="modal-foot">
+      <button class="mbtn mbtn-cancel" onclick="closeModal()">ยกเลิก</button>
+      <button class="mbtn mbtn-save" onclick="saveCard()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- CARD DETAIL MODAL -->
+<div class="mbg" id="detailModal">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title" id="detailTitle">รายละเอียด</span>
+      <button class="modal-close" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+    <div class="modal-foot">
+      <button class="mbtn mbtn-cancel" onclick="deleteCard()">🗑 ลบ</button>
+      <button class="mbtn mbtn-save" onclick="closeDetail()">ปิด</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== STORAGE =====
+function getCards(){try{return JSON.parse(localStorage.getItem('smg_board')||'[]');}catch{return[];}}
+function saveCards(c){try{localStorage.setItem('smg_board',JSON.stringify(c));}catch{}}
+
+const COL_MAP={quotation:'colQt',won:'colWon',lost:'colLost',invoiced:'colInv',paid:'colPaid'};
+const COL_LABELS={quotation:'📋 ใบเสนอราคา',won:'✅ ได้งาน',lost:'❌ ไม่ได้งาน',invoiced:'🧾 ใบแจ้งหนี้',paid:'💰 รับเงินแล้ว'};
+let dragId=null;
+let currentDetailId=null;
+
+// ===== INIT =====
+function init(){
+  const t=new Date();
+  document.getElementById('mDate').value=t.toISOString().split('T')[0];
+  // Import from invoice.html localStorage if available
+  importFromInvoice();
+  render();
+}
+
+function importFromInvoice(){
+  try{
+    const docs=JSON.parse(localStorage.getItem('smg_docs')||'[]');
+    const existing=getCards().map(c=>c.docNum);
+    const toAdd=docs.filter(d=>d.type==='quotation'&&!existing.includes(d.docNum));
+    if(toAdd.length){
+      const cards=getCards();
+      toAdd.forEach(d=>{
+        cards.push({
+          id:'imp_'+d.id,
+          docNum:d.docNum,
+          cust:d.custName,
+          amt:d.total,
+          date:d.date,
+          desc:'',
+          vat:d.hasVat,
+          status:'quotation',
+          created:Date.now()
+        });
+      });
+      saveCards(cards);
+    }
+  }catch(e){}
+}
+
+// ===== RENDER =====
+function render(){
+  const cards=getCards();
+  const cols={quotation:[],won:[],lost:[],invoiced:[],paid:[]};
+  cards.forEach(c=>{if(cols[c.status])cols[c.status].push(c);});
+
+  Object.keys(cols).forEach(status=>{
+    const el=document.getElementById(COL_MAP[status]);
+    const list=cols[status];
+    if(!list.length){
+      el.innerHTML=getEmptyHTML(status);
+      return;
+    }
+    el.innerHTML=list.map(c=>cardHTML(c,status)).join('');
+    // Re-bind drag
+    list.forEach(c=>{
+      const el2=document.getElementById('card_'+c.id);
+      if(el2){
+        el2.draggable=true;
+        el2.addEventListener('dragstart',e=>{dragId=c.id;el2.classList.add('dragging');});
+        el2.addEventListener('dragend',e=>el2.classList.remove('dragging'));
+      }
+    });
+  });
+
+  // Counts
+  document.getElementById('cntQt').textContent=cols.quotation.length;
+  document.getElementById('cntWon').textContent=cols.won.length;
+  document.getElementById('cntLost').textContent=cols.lost.length;
+  document.getElementById('cntInv').textContent=cols.invoiced.length;
+  document.getElementById('cntPaid').textContent=cols.paid.length;
+
+  // Summary
+  const wonAmt=cols.won.reduce((s,c)=>s+c.amt,0);
+  const invAmt=cols.invoiced.reduce((s,c)=>s+c.amt,0);
+  const paidAmt=cols.paid.reduce((s,c)=>s+c.amt,0);
+  document.getElementById('sumQt').textContent=cols.quotation.length+' ฉบับ';
+  document.getElementById('sumWon').textContent='฿'+fM(wonAmt);
+  document.getElementById('sumInv').textContent='฿'+fM(invAmt);
+  document.getElementById('sumPaid').textContent='฿'+fM(paidAmt);
+  document.getElementById('sumLost').textContent=cols.lost.length+' ฉบับ';
+}
+
+function getEmptyHTML(status){
+  const e={
+    quotation:'<div class="col-empty"><div class="col-empty-icon">📋</div><div class="col-empty-txt">ยังไม่มีใบเสนอราคา<br>กด "+ เพิ่มงาน" เพื่อเริ่ม</div></div>',
+    won:'<div class="col-empty"><div class="col-empty-icon">🎉</div><div class="col-empty-txt">ลากใบเสนอราคา<br>มาวางที่นี่เมื่อได้งาน</div></div>',
+    lost:'<div class="col-empty"><div class="col-empty-icon">📁</div><div class="col-empty-txt">ลากมาวางที่นี่<br>เมื่องานไม่ผ่าน</div></div>',
+    invoiced:'<div class="col-empty"><div class="col-empty-icon">🧾</div><div class="col-empty-txt">งานที่ออกใบแจ้งหนี้แล้ว<br>รอรับเงิน</div></div>',
+    paid:'<div class="col-empty"><div class="col-empty-icon">✨</div><div class="col-empty-txt">งานที่รับเงินแล้ว<br>เสร็จสมบูรณ์</div></div>',
+  };
+  return e[status]||'';
+}
+
+function cardHTML(c,status){
+  const actions={
+    quotation:`<button class="card-btn card-btn-won" onclick="moveCard('${c.id}','won')">✅ ได้งาน</button><button class="card-btn card-btn-lost" onclick="moveCard('${c.id}','lost')">❌ ไม่ได้</button>`,
+    won:`<button class="card-btn card-btn-inv" onclick="moveCard('${c.id}','invoiced')">🧾 ออกใบแจ้งหนี้</button>`,
+    lost:`<button class="card-btn card-btn-open" onclick="moveCard('${c.id}','quotation')">↩ คืนสถานะ</button>`,
+    invoiced:`<button class="card-btn card-btn-paid" onclick="moveCard('${c.id}','paid')">💰 รับเงินแล้ว</button>`,
+    paid:`<button class="card-btn card-btn-open" style="background:#e8f8ee;color:#1a7a3f">✅ เสร็จสมบูรณ์</button>`,
+  };
+  return`<div class="card" id="card_${c.id}" onclick="openDetail('${c.id}')">
+    <div class="card-num">${esc(c.docNum)}</div>
+    <div class="card-cust">${esc(c.cust)}</div>
+    <div class="card-amt">฿${fM(c.amt)}</div>
+    <div class="card-date">📅 ${fmtD(c.date)}</div>
+    ${c.vat?'<div class="card-tags"><span class="tag tag-vat">VAT 7%</span></div>':''}
+    <div class="card-actions" onclick="event.stopPropagation()">
+      ${actions[status]||''}
+      <button class="card-btn card-btn-open" onclick="openDetail('${c.id}')">ดูรายละเอียด</button>
+    </div>
+  </div>`;
+}
+
+// ===== DRAG & DROP =====
+function onDragOver(e,status){
+  e.preventDefault();
+  document.getElementById(COL_MAP[status]).classList.add('dragover');
+}
+function onDragLeave(e){e.currentTarget.classList.remove('dragover');}
+function onDrop(e,status){
+  e.preventDefault();
+  e.currentTarget.classList.remove('dragover');
+  if(!dragId)return;
+  moveCard(dragId,status);
+  dragId=null;
+}
+function moveCard(id,status){
+  const cards=getCards();
+  const c=cards.find(x=>x.id===id);
+  if(!c)return;
+  c.status=status;
+  saveCards(cards);
+  render();
+}
+
+// ===== ADD CARD =====
+function openAddCard(){
+  document.getElementById('modalTitle').textContent='+ เพิ่มใบเสนอราคา';
+  document.getElementById('mNum').value='SMG-QT-'+(new Date().getFullYear()+543)+'-'+(String(getCards().filter(c=>c.status!=='lost').length+1).padStart(3,'0'));
+  document.getElementById('mCust').value='';
+  document.getElementById('mAmt').value='';
+  document.getElementById('mDesc').value='';
+  document.getElementById('mVat').checked=false;
+  document.getElementById('mDate').value=new Date().toISOString().split('T')[0];
+  document.getElementById('addModal').classList.add('show');
+}
+function closeModal(){document.getElementById('addModal').classList.remove('show');}
+function saveCard(){
+  const num=document.getElementById('mNum').value.trim();
+  const cust=document.getElementById('mCust').value.trim();
+  if(!num||!cust){alert('กรุณากรอกเลขที่และชื่อลูกค้า');return;}
+  const card={
+    id:'c'+Date.now(),
+    docNum:num,cust,
+    amt:parseFloat(document.getElementById('mAmt').value)||0,
+    date:document.getElementById('mDate').value,
+    desc:document.getElementById('mDesc').value,
+    vat:document.getElementById('mVat').checked,
+    status:'quotation',created:Date.now()
+  };
+  const cards=getCards();cards.unshift(card);saveCards(cards);
+  closeModal();render();
+}
+
+// ===== DETAIL MODAL =====
+function openDetail(id){
+  const c=getCards().find(x=>x.id===id);if(!c)return;
+  currentDetailId=id;
+  document.getElementById('detailTitle').textContent=c.docNum;
+  const stColors={quotation:'var(--db)',won:'var(--won)',lost:'var(--lost)',invoiced:'var(--inv)',paid:'var(--paid)'};
+  const stBg={quotation:'var(--lb)',won:'var(--won-bg)',lost:'var(--lost-bg)',invoiced:'var(--inv-bg)',paid:'var(--paid-bg)'};
+  document.getElementById('detailBody').innerHTML=`
+    <div style="margin-bottom:12px">
+      <span class="status-badge" style="background:${stBg[c.status]||'var(--lb)'};color:${stColors[c.status]||'var(--db)'}">${COL_LABELS[c.status]||c.status}</span>
+    </div>
+    <table style="width:100%;font-size:11.5px;font-family:'Prompt',sans-serif;border-collapse:collapse">
+      <tr><td style="color:var(--mu);padding:5px 0;width:35%">ชื่อลูกค้า</td><td style="font-weight:600;color:var(--db)">${esc(c.cust)}</td></tr>
+      <tr><td style="color:var(--mu);padding:5px 0">มูลค่า</td><td style="font-weight:700;color:var(--gg);font-family:'Montserrat',sans-serif">฿${fM(c.amt)}</td></tr>
+      <tr><td style="color:var(--mu);padding:5px 0">VAT 7%</td><td>${c.vat?'<span style="color:var(--won);font-weight:600">มี VAT</span>':'ไม่มี'}</td></tr>
+      <tr><td style="color:var(--mu);padding:5px 0">วันที่</td><td>${fmtD(c.date)}</td></tr>
+      ${c.desc?`<tr><td style="color:var(--mu);padding:5px 0">รายละเอียด</td><td>${esc(c.desc)}</td></tr>`:''}
+    </table>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--br)">
+      <div style="font-size:10px;color:var(--mu);font-family:'Montserrat',sans-serif;letter-spacing:.5px;margin-bottom:8px">เปลี่ยนสถานะ</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${Object.entries(COL_LABELS).map(([k,v])=>
+          `<button onclick="moveCard('${id}','${k}');closeDetail();render();" style="font-family:'Kanit',sans-serif;font-size:10px;font-weight:600;padding:5px 10px;border-radius:4px;border:1px solid var(--br);background:${c.status===k?'var(--db)':'var(--lb)'};color:${c.status===k?'var(--wh)':'var(--db)'};cursor:pointer">${v}</button>`
+        ).join('')}
+      </div>
+    </div>
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--br)">
+      <a href="invoice.html" style="font-family:'Kanit',sans-serif;font-size:11px;font-weight:600;color:var(--db);text-decoration:none;display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:var(--lb);border-radius:4px;border:1px solid var(--br)">📄 เปิดระบบเอกสาร →</a>
+    </div>`;
+  document.getElementById('detailModal').classList.add('show');
+}
+function closeDetail(){document.getElementById('detailModal').classList.remove('show');currentDetailId=null;}
+function deleteCard(){
+  if(!currentDetailId)return;
+  if(!confirm('ลบ Card นี้?'))return;
+  saveCards(getCards().filter(c=>c.id!==currentDetailId));
+  closeDetail();render();
+}
+
+// ===== HELPERS =====
+function fM(n){return(n||0).toLocaleString('th-TH',{minimumFractionDigits:0,maximumFractionDigits:0});}
+function fmtD(s){if(!s)return'—';const[y,m,d]=s.split('-');const mn=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];return`${parseInt(d)} ${mn[parseInt(m)-1]} ${parseInt(y)+543}`;}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+init();
+</script>
+</body>
+</html>
